@@ -7,46 +7,38 @@ import datetime
 
 app = FastAPI()
 
-# mount static files
 app.mount("/static", StaticFiles(directory="/app/static"), name="static")
 templates = Jinja2Templates(directory="/app/template")
 
-# init firestore client
 db = firestore.Client()
 votes_collection = db.collection("votes")
 
-
 @app.get("/")
 async def read_root(request: Request):
-    # ====================================
-    # ++++ START CODE HERE ++++
-    # ====================================
-
-    # stream all votes; count tabs / spaces votes, and get recent votes
-
-    # ====================================
-    # ++++ STOP CODE ++++
-    # ====================================
+   
+    votes = votes_collection.stream()
+    vote_data = [v.to_dict() for v in votes]
+    
+   
+    tabs_count = sum(1 for vote in vote_data if vote.get("team") == "TABS")
+    spaces_count = sum(1 for vote in vote_data if vote.get("team") == "SPACES")
+    
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "tabs_count": 0,
-        "spaces_count": 0,
-        "recent_votes": []
+        "tabs_count": tabs_count,
+        "spaces_count": spaces_count,
+        "recent_votes": vote_data
     })
-
 
 @app.post("/")
 async def create_vote(team: Annotated[str, Form()]):
     if team not in ["TABS", "SPACES"]:
         raise HTTPException(status_code=400, detail="Invalid vote")
 
-    # ====================================
-    # ++++ START CODE HERE ++++
-    # ====================================
-
-    # create a new vote document in firestore
-    return {"detail": "Not implemented yet!"}
-
-    # ====================================
-    # ++++ STOP CODE ++++
-    # ====================================
+    vote_doc = {
+        "team": team,
+        "time_cast": datetime.datetime.utcnow().isoformat()
+    }
+    votes_collection.add(vote_doc)
+    
+    return {"detail": "Vote recorded successfully!"}
