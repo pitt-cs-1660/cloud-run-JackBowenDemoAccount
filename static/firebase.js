@@ -117,11 +117,30 @@ async function vote(team) {
     try {
       const token = await createIdToken();
 
-      /*
-       * ++++ YOUR CODE HERE ++++
-       */
-      window.alert(`Not implemented yet!`);
+      // Prepare the request data
+      const data = new URLSearchParams();
+      data.append('team', team);  // Add the team as form data
 
+      // Send the POST request to the backend voting endpoint
+      const response = await fetch('/', {  // Adjusted to root as per backend setup
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: data.toString(), // Convert form data to a string
+      });
+
+      // Handle the response
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Vote submitted successfully:', result);
+        window.alert(`Vote for ${team} submitted successfully!`);
+      } else {
+        const error = await response.json();
+        console.error('Error submitting vote:', error);
+        window.alert(`Error submitting vote: ${error.detail || 'Please try again later.'}`);
+      }
     } catch (err) {
       console.log(`Error when submitting vote: ${err}`);
       window.alert('Something went wrong... Please try again!');
